@@ -1,0 +1,35 @@
+version: "3.8"
+services:
+  logger-1:
+    container_name: logger-1  # Equivalent to k8s cluster ip (Service) and CoreDNS
+    image: harbor.s3c.corp.saab.se/dockerhub/library/alpine:latest
+    command: nc -lk -p 9090 -vv
+  talker-1:
+    container_name: talker-1
+    image: harbor.s3c.corp.saab.se/dockerhub/library/alpine:latest
+    command: nc logger-1 9090 -vv
+
+  host-logger:
+    container_name: host-logger  # Equivalent to k8s cluster ip (Service) and CoreDNS
+    image: harbor.s3c.corp.saab.se/dockerhub/library/alpine:latest
+    command: nc -lk -p 9091 -vv
+    ports:
+      - "9091:9091"
+    # Similar to "kubectl port-forward"
+    # Reach with `nc <localhost/127.0.0.1> 9091`
+    networks:
+      group_1:
+
+  host-talker:
+    container_name: host-talker  # Equivalent to k8s cluster ip (Service) and CoreDNS
+    image: harbor.s3c.corp.saab.se/dockerhub/library/alpine:latest
+    command: nc host.docker.internal 9092 -vv
+    # host.docker.internal 172.17.0.1
+    # start host server with `nc -l -p 9092` - if using linux docker in windows use the closest wsl context.
+    # Networks defined in compose are different subnets than docker0 ex. "br-569d2f1b7221"
+    # Try fw.msc opening 192.168.48.0/24 / or whatever definition is relevant for WSL docker
+    # Try port forwarding 9092 from rancher-desktop to windows via netsh.
+
+networks:
+  group_1:
+  group_2:
